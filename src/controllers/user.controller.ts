@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import User from "../models/user.model";
 import IUser from "../interfaces/user.interface";
+import { NotFoundException } from "../utils/http.exception";
 
 export const index = async (
   req: Request,
@@ -41,7 +42,9 @@ export const create = async (
 export const show = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
+    const user = await User.findById(id).orFail(
+      new NotFoundException("User not found")
+    );
     return res.status(200).json(user);
   } catch (error) {
     return next(error);
@@ -55,8 +58,9 @@ export const destroy = async (
 ) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id);
-    if (!user) return res.status(404).json("Not existe");
+    const user = await User.findById(id).orFail(
+      new NotFoundException("User not found")
+    );
     await user.deleteOne();
     return res.status(200).json(user);
   } catch (error) {

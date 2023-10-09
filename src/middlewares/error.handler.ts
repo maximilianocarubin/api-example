@@ -2,7 +2,7 @@ import { HttpException } from "../utils/http.exception";
 import { NextFunction, Request, Response } from "express";
 import logger from "../utils/logger";
 
-const errorHandler = async(
+const errorHandler = (
   err: HttpException,
   req: Request,
   res: Response,
@@ -17,5 +17,5 @@ const errorHandler = async(
     status,
     message,
   });
-}
+};
 export default errorHandler;

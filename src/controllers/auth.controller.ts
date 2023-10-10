@@ -2,7 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import User from "../models/user.model";
 import IUser from "../interfaces/user.interface";
 import jwt from "jsonwebtoken";
-import { BadRequestException, HttpException, NotFoundException } from "../utils/http.exception";
+import {
+  BadRequestException,
+  HttpException,
+  NotFoundException,
+  UnauthorizedException,
+} from "../utils/http.exception";
 
 export const signup = async (
   req: Request,
@@ -12,8 +17,10 @@ export const signup = async (
   try {
     const { nombre, email, contraseña, rol } = req.body;
 
-    if (await User.findOne({ email })) { throw new HttpException(400, 'The user is already registered'); }
-    
+    if (await User.findOne({ email })) {
+      throw new BadRequestException("The user is already registered");
+    }
+
     let user: IUser = new User({
       nombre,
       email,
@@ -33,7 +40,7 @@ export const signup = async (
     );
     return res.json(userData);
   } catch (err) {
-    return next(err);
+    next(err);
   }
 };
 
@@ -51,7 +58,7 @@ export const login = async (
       throw new HttpException(401, "Unauthorized, missing password");
 
     const correctPassword = await user.validarContraseña(req.body.contraseña);
-    if (!correctPassword) throw new HttpException(401, "Invalid Password");
+    if (!correctPassword) throw new UnauthorizedException("Invalid Password");
 
     // Create a Token
     const token: string = jwt.sign(

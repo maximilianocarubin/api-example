@@ -12,7 +12,7 @@ export const index = async (
     const users = await User.find();
     return res.status(200).json(users);
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
@@ -35,7 +35,7 @@ export const create = async (
 
     return res.status(200).json(user);
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
@@ -47,7 +47,7 @@ export const show = async (req: Request, res: Response, next: NextFunction) => {
     );
     return res.status(200).json(user);
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
@@ -64,6 +64,6 @@ export const destroy = async (
     await user.deleteOne();
     return res.status(200).json(user);
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };

@@ -2,6 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import User from "../models/user.model";
 import IUser from "../interfaces/user.interface";
 import jwt from "jsonwebtoken";
+import {
+  BadRequestException,
+  HttpException,
+  NotFoundException,
+  UnauthorizedException,
+} from "../utils/http.exception";
 
 export const signup = async (
   req: Request,
@@ -10,6 +16,11 @@ export const signup = async (
 ) => {
   try {
     const { nombre, email, contraseña, rol } = req.body;
+
+    if (await User.findOne({ email })) {
+      throw new BadRequestException("The user is already registered");
+    }
+
     let user: IUser = new User({
       nombre,
       email,
@@ -18,17 +29,18 @@ export const signup = async (
     });
 
     if ((await user.guardarContraseña()) === false) {
-      res.status(400).json("Password encryption failed");
+      throw new BadRequestException("Password encryption failed");
     }
 
     await user.save();
 
     // Devolver datos
-    const userData = await User.findById(user._id);
-    if (!userData) return res.status(404).json("UserData not found");
+    const userData = await User.findById(user._id).orFail(
+      new NotFoundException("User Data not found")
+    );
     return res.json(userData);
   } catch (err) {
-    return next(err);
+    next(err);
   }
 };
 
@@ -38,16 +50,15 @@ export const login = async (
   next: NextFunction
 ) => {
   try {
-    const user: IUser = await User.findOne({ email: req.body.email }).select(
-      "+contraseña"
-    );
+    const user: IUser = await User.findOne({ email: req.body.email })
+      .select("+contraseña")
+      .orFail(new NotFoundException("User not found"));
 
-    if (!user) return res.status(404).json("User Not Found");
     if (!user.contraseña)
-      return res.status(401).json("Unauthorized, missing password");
+      throw new HttpException(401, "Unauthorized, missing password");
 
     const correctPassword = await user.validarContraseña(req.body.contraseña);
-    if (!correctPassword) return res.status(401).json("Invalid Password");
+    if (!correctPassword) throw new UnauthorizedException("Invalid Password");
 
     // Create a Token
     const token: string = jwt.sign(
@@ -61,6 +72,6 @@ export const login = async (
     const { contraseña, ...data } = user.toJSON();
     return res.header("auth-token", token).json({ ...data, token });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };

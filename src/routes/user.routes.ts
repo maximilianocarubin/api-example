@@ -1,13 +1,14 @@
 import { Router } from "express";
 import * as userController from "../controllers/user.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
+import { adminMiddleware } from "../middlewares/admin.middleware";
 
-const router = Router().use(authMiddleware);
+const router = Router();
 
 // OBTENER TODOS
-router.get("/", userController.index);
+router.get("/", authMiddleware, adminMiddleware, userController.index);
 // CREAR
-router.post("/", userController.create);
+router.post("/",userController.create);
 // OBTENER UNO
 router.get("/:id", userController.show);
 // BORRAR
